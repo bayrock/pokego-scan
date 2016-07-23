@@ -7,8 +7,8 @@ var async = require('async'),
 
 function get(url, next) {
     debug(url);
-    cloudscraper.get(url, function(error, response, body) {
-      if (error) {
+    cloudscraper.get(url, function(err, response, body) {
+      if (err) {
         next(err);
       } else {
         if (debug.enabled) {
