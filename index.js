@@ -2,27 +2,8 @@ var async = require('async'),
     debug = require('debug')('pokego-scan'),
     geolib = require('geolib'),
     isFunction = require('is-function'),
-    pokedex = require('./pokedex.json');
-    cloudscraper = require('cloudscraper');
-
-function get(url, next) {
-    debug(url);
-    cloudscraper.get(url, function(err, response, body) {
-      if (err) {
-        next(err);
-      } else {
-        if (debug.enabled) {
-            try {
-                var json = JSON.parse(body);
-                debug(json);
-            } catch (e) {
-                debug('(non-json content)');
-            }
-        }
-        next(null, body);
-      }
-    });
-}
+    pokedex = require('./pokedex.json'),
+    api = require('./poke-api.js');
 
 function secondsToString(sec) {
     var o = parseInt(sec, 10),
@@ -38,33 +19,13 @@ function secondsToString(sec) {
     return i + ':' + t
 }
 
-function createScanJob(coor, next) {
-    var url = 'https://pokevision.com/map/scan/'+coor.latitude+'/'+coor.longitude;
-    get(url, function(err, body) {
-        if (err) return next(err);
-
-        try {
-            var json = JSON.parse(body);
-
-            next(null, {
-                latitude: coor.latitude,
-                longitude: coor.longitude,
-                jobId: json.jobId,
-                jobUrl: 'https://pokevision.com/map/data/'+coor.latitude+'/'+coor.longitude+'/'+json.jobId
-            });
-        } catch (e) {
-            if (body.indexOf('{disabled}') > -1) {
-                return next(new Error('Scanning is currently disabled temporarily.'));
-            } else if (body.indexOf('{scan-throttle}') > -1) {
-                return next(new Error('You already scanned recently.'));
-            } else if (body.indexOf('Maintenance') > -1) {
-                return next(new Error('Pokevision API is undergoing maintentance. Everything should be completed shortly.'));
-            }
-        }
+function createScanJob(coords, next) {
+    api.createScanJob(coords, function(err, jobInfo) {
+        next(err, jobInfo);
     });
 }
 
-function getJobResults(job, next) {
+function getJobResults(jobInfo, next) {
     var currentAttempt = 0,
         retryTimeout = 0,
         retryTimeoutIncr = 1500,
@@ -75,14 +36,12 @@ function getJobResults(job, next) {
         currentAttempt++;
 
         if (currentAttempt > retries) {
-            return next(new Error('Too many retries. Either the Pokemon or Pokevision servers may be unstable or offline.'));
+            return next(new Error('Too many retries. Either the Pokemon servers may be unstable or offline.'));
         }
 
         setTimeout(function() {
-            get(job.jobUrl, function(err, body) {
+            api.getJobStatus(jobInfo, function(err, json) {
                 if (err) return next(err);
-
-                var json = JSON.parse(body);
 
                 if (json.jobStatus) {
                     if (json.jobStatus == 'failure' || json.jobStatus == 'unknown') {
@@ -123,10 +82,10 @@ module.exports = function(coords, opts, next) {
         opts = {};
     }
 
-    createScanJob(coords, function(err, job) {
+    createScanJob(coords, function(err, jobInfo) {
         if (err) return next(err);
 
-        getJobResults(job, function(err, res) {
+        getJobResults(jobInfo, function(err, res) {
             if (err) return next(err);
 
             var foundPokemon = [];

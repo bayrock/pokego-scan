@@ -1,12 +1,10 @@
 ## pokego-scan
 
-Node package to scan pokemon through PokeVision's API.
+Node package for scanning Pokemon in Pokemon GO.
 
-This package uses PokeVision's internal API to query the location
-of pokemon close to the given coordinates. As [PokeVision's service](https://pokevision.com/),
-no authentication is required.
+No authentication with PTC or Google is required at this time.
 
-This project is not endorsed in any way by PokeVision or Niantic,
+This project is not endorsed in any way by Nintendo or Niantic,
 use it at your own risk.
 
 ### Usage
