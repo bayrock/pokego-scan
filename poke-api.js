@@ -20,17 +20,24 @@ function get(url, next) {
     });
 }
 
+function ErrorWithType(message, type) {
+    this.message = (message || "");
+    this.type = type || "error";
+}
+
+ErrorWithType.prototype = Error.prototype;
+
 function getErrorFromHtmlResp(html) {
     var err = null;
 
     if (html.indexOf('{disabled}') !== -1) {
-        err = new Error('Scanning is currently disabled temporarily.');
+        err = new ErrorWithType('Scanning is currently disabled temporarily.', 'warning');
     } else if (html.indexOf('{scan-throttle}') !== -1) {
-        err = new Error('You already scanned recently.');
+        err = new ErrorWithType('You already scanned recently.', 'warning');
     } else if (html.indexOf('Maintenance') !== -1) {
-        err = new Error('API is undergoing maintenance. Everything should be completed shortly.');
+        err = new ErrorWithType('API is undergoing maintenance. Everything should be completed shortly.', 'warning');
     } else {
-        err = new Error('Unknown response received from API.');
+        err = new ErrorWithType('Unknown response received from API.');
     }
 
     return err;
@@ -40,11 +47,11 @@ function getErrorFromJsonResp(json) {
     var err = null;
 
     if (json.message.indexOf('{disabled}') !== -1) {
-        err = new Error('Scanning is currently disabled temporarily.');
+        err = new ErrorWithType('Scanning is currently disabled temporarily.', 'warning');
     } else if (json.message.indexOf('{scan-throttle}') !== -1) {
-        err = new Error('You already scanned recently.');
+        err = new ErrorWithType('You already scanned recently.', 'warning');
     } else {
-        err = new Error(json.message || 'Unknown invalid response received from API.');
+        err = new ErrorWithType(json.message || 'Unknown invalid response received from API.');
     }
 
     return err;
