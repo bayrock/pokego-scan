@@ -36,7 +36,7 @@ function getJobResults(jobInfo, next) {
         currentAttempt++;
 
         if (currentAttempt > retries) {
-            return next(new Error('Too many retries. Either the Pokemon servers may be unstable or offline.'));
+            return next(new api.ErrorWithType('Too many retries. Either the Pokemon servers may be unstable or offline.'));
         }
 
         setTimeout(function() {
@@ -45,7 +45,7 @@ function getJobResults(jobInfo, next) {
 
                 if (json.jobStatus) {
                     if (json.jobStatus == 'failure' || json.jobStatus == 'unknown') {
-                        next(new Error('Unable to scan for pokemon. If this continues to fail then the Pokemon servers are currently unstable or offline.'));
+                        next(new api.ErrorWithType('Unable to scan for pokemon. If this continues to fail then the Pokemon servers are currently unstable or offline.'));
                     } else if (json.jobStatus == 'in_progress') {
                         debug('job in progress, retry in %sms (attempt %s of %s)', retryTimeout, currentAttempt+1, retries);
                         loop(null);

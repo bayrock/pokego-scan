@@ -26,6 +26,7 @@ function ErrorWithType(message, type) {
 }
 
 ErrorWithType.prototype = Error.prototype;
+module.exports.ErrorWithType = ErrorWithType;
 
 function getErrorFromHtmlResp(html) {
     var err = null;
